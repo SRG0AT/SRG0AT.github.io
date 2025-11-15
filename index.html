@@ -3,16 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Videos de YouTube</title>
+  <title>Buscador de Videos Pexels</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    #search-form {
+      margin-bottom: 20px;
+    }
+    #video-list {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    #video-list li {
+      cursor: pointer;
+      width: 200px;
+    }
+    #video-list img {
+      width: 100%;
+      border-radius: 5px;
+    }
+    video {
+      width: 80%;
+      max-width: 800px;
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Mi Video de YouTube</h1>
+  <h1>Buscador de Vídeos Pexels</h1>
+  <form id="search-form">
+    <input type="text" id="search-input" placeholder="Buscar videos..." required>
+    <button type="submit">Buscar</button>
+  </form>
 
-  <iframe width="560" height="315" 
-  src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
-  title="YouTube video player" frameborder="0" 
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-  allowfullscreen></iframe>
+  <ul id="video-list"></ul>
 
+  <video id="player" controls>
+    <source id="video-source" src="" type="video/mp4">
+    Tu navegador no soporta el video.
+  </video>
+
+  <script>
+    const API_KEY = 'Wg2rbXiZmQLrFi7x3ZlO1aGVmJOqS9J5Nc9ZPf3NtHGsImMXHwbgb6pI'; // <--- pon aquí tu clave de Pexels
+    const API_URL = 'https://api.pexels.com/videos/search';
+
+    const form = document.getElementById('search-form');
+    const input = document.getElementById('search-input');
+    const videoList = document.getElementById('video-list');
+    const player = document.getElementById('player');
+    const videoSource = document.getElementById('video-source');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = input.value;
+      buscarVideos(query);
+    });
+
+    async function buscarVideos(query) {
+      // Limpiar lista
+      videoList.innerHTML = '';
+
+      // Hacer la petición a la API de Pexels
+      const response = await fetch(`${API_URL}?query=${encodeURIComponent(query)}&per_page=10`, {
+        headers: {
+          Authorization: API_KEY
+        }
+      });
+
+      if (!response.ok) {
+        alert('Error al buscar videos');
+        return;
+      }
+
+      const data = await response.json();
+      console.log(data);
+
+      // data.videos es un array con los vídeos
+      data.videos.forEach(video => {
+        // Elegimos un video_file, por ejemplo el de calidad "sd" o el primero
+        const file = video.video_files.find(f => f.quality === 'sd') || video.video_files[0];
+        const picture = video.image; // miniatura
+
+        const li = document.createElement('li');
+        li.innerHTML = `<img src="${picture}" alt="Miniatura"><p>Duración: ${video.duration}s</p>`;
+        li.addEventListener('click', () => {
+          player.pause();
+          videoSource.src = file.link;
+          player.load();
+          player.play();
+        });
+
+        videoList.appendChild(li);
+      });
+    }
+  </script>
 </body>
 </html>
